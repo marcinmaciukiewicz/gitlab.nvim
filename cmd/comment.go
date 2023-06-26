@@ -15,7 +15,6 @@ import (
 	"github.com/xanzy/go-gitlab"
 )
 
-const mrVersionsUrl = "https://gitlab.com/api/v4/projects/%s/merge_requests/%d/versions"
 
 type MRVersion struct {
 	ID             int       `json:"id"`
@@ -209,7 +208,7 @@ func EditComment(w http.ResponseWriter, r *http.Request) {
 
 func (c *Client) PostComment(cr PostCommentRequest) (*http.Response, error) {
 
-	err, response := getMRVersions(c.projectId, c.mergeId)
+	err, response := getMRVersions(c.gitlabInstance, c.projectId, c.mergeId)
 	if err != nil {
 		return nil, fmt.Errorf("Error making diff thread: %e", err)
 	}
@@ -255,10 +254,10 @@ func min(a int, b int) int {
 }
 
 /* Gets the latest merge request revision data */
-func getMRVersions(projectId string, mergeId int) (e error, response *http.Response) {
-
+func getMRVersions(gitlabInstance string, projectId string, mergeId int) (e error, response *http.Response) {
 	gitlabToken := os.Getenv("GITLAB_TOKEN")
-	url := fmt.Sprintf(mrVersionsUrl, projectId, mergeId)
+  const mrVersionsUrl =  "%s/api/v4/projects/%s/merge_requests/%d/versions"
+	url := fmt.Sprintf(gitlabInstance, mrVersionsUrl, projectId, mergeId)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 
@@ -288,7 +287,7 @@ The go-gitlab client was not working for this API specifically 😢
 */
 func (c *Client) CommentOnDeletion(lineNumber int, fileName string, comment string, diffVersionInfo MRVersion, i int) (*http.Response, error) {
 
-	deletionDiscussionUrl := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/merge_requests/%d/discussions", c.projectId, c.mergeId)
+	deletionDiscussionUrl := fmt.Sprintf(c.gitlabInstance + "/api/v4/projects/%s/merge_requests/%d/discussions", c.projectId, c.mergeId)
 
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)

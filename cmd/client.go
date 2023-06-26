@@ -13,6 +13,7 @@ type Client struct {
 	command   string
 	projectId string
 	mergeId   int
+  gitlabInstance string
 	git       *gitlab.Client
 }
 
@@ -33,16 +34,23 @@ func (l Logger) Printf(s string, args ...interface{}) {
 /* This will initialize the client with the token and check for the basic project ID and command arguments */
 func (c *Client) Init(branchName string) error {
 
-	if len(os.Args) < 2 {
+	if len(os.Args) < 3 {
 		return errors.New("Must provide project ID!")
 	}
 
 	projectId := os.Args[1]
+  gitlabInstance := os.Args[2]
+
+  c.gitlabInstance = gitlabInstance
 	c.projectId = projectId
 
 	if projectId == "" {
 		return errors.New("Project ID cannot be empty")
 	}
+
+  if gitlabInstance == "" {
+    return errors.New("GitLab instance URL cannot be empty")
+  }
 
 	var l Logger
 	git, err := gitlab.NewClient(os.Getenv("GITLAB_TOKEN"), gitlab.WithCustomLogger(l))

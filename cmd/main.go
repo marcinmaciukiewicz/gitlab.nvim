@@ -38,7 +38,7 @@ func main() {
 	m.Handle("/reply", withGitlabContext(http.HandlerFunc(ReplyHandler), c))
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%s", os.Args[2]),
+		Addr:    fmt.Sprintf(":%s", os.Args[3]),
 		Handler: m,
 	}
 

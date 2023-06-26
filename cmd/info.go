@@ -9,11 +9,11 @@ import (
 	"os"
 )
 
-const mrUrl = "https://gitlab.com/api/v4/projects/%s/merge_requests/%d"
 
 func (c *Client) Info() ([]byte, error) {
+  const mrUrl = "%s/api/v4/projects/%s/merge_requests/%d"
 
-	url := fmt.Sprintf(mrUrl, c.projectId, c.mergeId)
+	url := fmt.Sprintf(c.gitlabInstance, mrUrl, c.projectId, c.mergeId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 
 	if err != nil {
