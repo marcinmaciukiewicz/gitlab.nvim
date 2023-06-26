@@ -57,6 +57,7 @@ M.setup = function(args)
 
 	local project_id, gitlab_url = config_file_content:match("project_id=(.-)\ngitlab_url=(.-)\n")
 	if project_id == nil or gitlab_url == nil then
+		error("project " + project_id)
 		error("Incomplete or invalid configuration file!")
 	end
 
