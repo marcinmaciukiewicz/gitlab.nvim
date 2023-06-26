@@ -55,7 +55,15 @@ M.setup = function(args)
 		return
 	end
 
-	local project_id, gitlab_url = config_file_content:match("project_id=(.-)\ngitlab_url=(.-)\n")
+	file = assert(io.open(config_file_path, "r"))
+	property = {}
+	for line in file:lines() do
+		for key, value in string.gmatch(line, "(.-)=(.-)$") do
+			property[key] = value
+		end
+	end
+	local project_id = property["project_id"]
+	local gitlab_url = property["gitlab_url"]
 	if project_id == nil or gitlab_url == nil then
 		error("project " + project_id)
 		error("Incomplete or invalid configuration file!")
