@@ -40,6 +40,7 @@ func (c *Client) Init(branchName string) error {
 
 	projectId := os.Args[1]
   gitlabInstance := os.Args[2]
+  authToken := os.Args[4]
 
   c.gitlabInstance = gitlabInstance
 	c.projectId = projectId
@@ -53,7 +54,8 @@ func (c *Client) Init(branchName string) error {
   }
 
 	var l Logger
-	git, err := gitlab.NewClient(os.Getenv("GITLAB_TOKEN"), gitlab.WithCustomLogger(l))
+  var apiCustUrl = fmt.Sprintf(c.gitlabInstance + "/api/v4")
+	git, err := gitlab.NewClient(authToken, gitlab.WithBaseURL(apiCustUrl), gitlab.WithCustomLogger(l))
 
 	if err != nil {
 		return fmt.Errorf("Failed to create client: %v", err)

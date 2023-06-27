@@ -64,13 +64,14 @@ M.setup = function(args)
 	end
 	local project_id = property["project_id"]
 	local gitlab_url = property["gitlab_url"]
-	if project_id == nil or gitlab_url == nil then
-		error("project " + project_id)
+	local auth_token = property["auth_token"]
+	if project_id == nil or gitlab_url == nil or auth_token == nil then
 		error("Incomplete or invalid configuration file!")
 	end
 
 	state.PROJECT_ID = project_id
 	state.GITLAB_URL = gitlab_url
+	state.AUTH_TOKEN = auth_token
 
 	if state.GITLAB_URL == nil then
 		error("No gitlab url provided!")
@@ -78,6 +79,10 @@ M.setup = function(args)
 
 	if state.PROJECT_ID == nil then
 		error("No project ID provided!")
+	end
+
+	if state.AUTH_TOKEN == nil then
+		error("No auth token")
 	end
 
 	if type(tonumber(state.PROJECT_ID)) ~= "number" then
@@ -90,33 +95,44 @@ M.setup = function(args)
 
 	if u.is_gitlab_repo() then
 		state.PORT = args.port or 21036
-		vim.fn.jobstart(state.BIN .. " " .. state.PROJECT_ID .. " " .. state.GITLAB_URL .. "" .. state.PORT, {
-			on_stdout = function(job_id)
-				if job_id <= 0 then
-					notify("Could not start gitlab.nvim binary", "error")
-					return
-				else
-					local response_ok, response = pcall(
-						curl.get,
-						"localhost:" .. state.PORT .. "/info",
-						{ timeout = 750 }
-					)
-					if response == nil or not response_ok then
-						notify("The gitlab.nvim server did not respond", "error")
+		vim.fn.jobstart(
+			state.BIN
+				.. " "
+				.. state.PROJECT_ID
+				.. " "
+				.. state.GITLAB_URL
+				.. ""
+				.. state.PORT
+				.. " "
+				.. state.AUTH_TOKEN,
+			{
+				on_stdout = function(job_id)
+					if job_id <= 0 then
+						notify("Could not start gitlab.nvim binary", "error")
 						return
+					else
+						local response_ok, response = pcall(
+							curl.get,
+							"localhost:" .. state.PORT .. "/info",
+							{ timeout = 750 }
+						)
+						if response == nil or not response_ok then
+							notify("The gitlab.nvim server did not respond", "error")
+							return
+						end
+						local body = response.body
+						local parsed_ok, data = pcall(vim.json.decode, body)
+						if parsed_ok ~= true then
+							notify("The gitlab.nvim server returned an invalid response to the /info endpoint", "error")
+							return
+						end
+						state.INFO = data
+						keymaps.set_keymap_keys(args.keymaps)
+						keymaps.set_keymaps()
 					end
-					local body = response.body
-					local parsed_ok, data = pcall(vim.json.decode, body)
-					if parsed_ok ~= true then
-						notify("The gitlab.nvim server returned an invalid response to the /info endpoint", "error")
-						return
-					end
-					state.INFO = data
-					keymaps.set_keymap_keys(args.keymaps)
-					keymaps.set_keymaps()
-				end
-			end,
-		})
+				end,
+			}
+		)
 	end
 end
 
